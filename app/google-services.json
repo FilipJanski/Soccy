@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "685783490668",
+    "project_id": "soccy-11cd5",
+    "storage_bucket": "soccy-11cd5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:685783490668:android:c100169d37f881a165b849",
+        "android_client_info": {
+          "package_name": "com.example.soccy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9eBcm2kzf2VORu76o1Ld3Y71c0z1eEos"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
