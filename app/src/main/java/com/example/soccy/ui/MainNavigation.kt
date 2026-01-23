@@ -26,9 +26,9 @@ sealed class Screen(val title: String, val icon: ImageVector) {
     data object Players : Screen("Zawodnicy", Icons.Default.Groups)
 
 }
-
 @Composable
-fun MainNavigation() {
+fun MainNavigation(role: String, login: String) {
+    Text("Zalogowano jako: $login ($role)")
     val navController = rememberNavController()
 
     Scaffold(
