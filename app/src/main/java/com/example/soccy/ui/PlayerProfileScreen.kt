@@ -1,26 +1,34 @@
 package com.example.soccy.ui
 
+
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.firebase.firestore.FirebaseFirestore
 import com.example.soccy.model.Player
+import com.google.firebase.firestore.FirebaseFirestore
+import io.github.sceneview.Scene
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.rememberRenderer
+import io.github.sceneview.rememberScene
+import io.github.sceneview.rememberView
+import io.github.sceneview.math.Position
+import io.github.sceneview.rememberCameraNode
 
 
-// 🔹 Ekran profilu gracza
 @Composable
 fun PlayerProfileScreen(playerId: String?) {
     var player by remember { mutableStateOf<Player?>(null) }
     val db = FirebaseFirestore.getInstance()
-
-    // Dodane — zapewnia aktualny playerId w LaunchedEffect
     val currentPlayerId by rememberUpdatedState(playerId)
 
     LaunchedEffect(currentPlayerId) {
@@ -57,7 +65,6 @@ fun PlayerProfileScreen(playerId: String?) {
     }
 }
 
-// 🔹 UI profilu gracza
 @Composable
 fun PlayerProfileContent(player: Player) {
     var selectedTab by remember { mutableStateOf("info") }
@@ -67,7 +74,6 @@ fun PlayerProfileContent(player: Player) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Górny blok: zdjęcie + dane
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -78,9 +84,7 @@ fun PlayerProfileContent(player: Player) {
                 modifier = Modifier
                     .size(80.dp)
                     .background(Color.Gray, shape = CircleShape)
-            ) {
-                // Tu możesz dodać zdjęcie w przyszłości
-            }
+            ) {}
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -90,79 +94,139 @@ fun PlayerProfileContent(player: Player) {
                 shape = MaterialTheme.shapes.medium
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = player.firstName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = player.lastName,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Text(player.firstName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Text(player.lastName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
 
-        // Przełączniki: Informacje / Statystyki
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
         ) {
-            val buttonModifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
+            val tabItems = listOf(
+                "Informacje ogólne" to "info",
+                "Statystyki" to "stats",
+                "Model 3D" to "model"
+            )
 
-            Button(
-                onClick = { selectedTab = "info" },
-                modifier = buttonModifier,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectedTab == "info") MaterialTheme.colorScheme.primary else Color.LightGray,
-                    contentColor = if (selectedTab == "info") Color.White else Color.Black
-                ),
-                shape = RoundedCornerShape(0.dp)
-
-            ) {
-                Text("Informacje ogólne")
-            }
-
-            Button(
-                onClick = { selectedTab = "stats" },
-                modifier = buttonModifier,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (selectedTab == "stats") MaterialTheme.colorScheme.primary else Color.LightGray,
-                    contentColor = if (selectedTab == "stats") Color.White else Color.Black
-                ),
-                shape = RoundedCornerShape(0.dp)
-            ) {
-                Text("Statystyki")
+            tabItems.forEach { (label, key) ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(if (selectedTab == key) MaterialTheme.colorScheme.primary else Color.LightGray)
+                        .clickable { selectedTab = key },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        color = if (selectedTab == key) Color.White else Color.Black,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Zawartość zakładek
-        if (selectedTab == "info") {
-            Column {
-                Text("Imię: ${player.firstName}")
-                Text("Nazwisko: ${player.lastName}")
-                Text("Wzrost: ${player.height} cm")
-                Text("Data urodzenia: ${player.birthDate}")
-                Text("Numer koszulki: ${player.jerseyNumber}")
-                Text("Dominująca noga: ${player.dominantFoot}")
-                Text("Kraj: ${player.country}")
-                Text("Klub: ${player.club}")
-                Text("Pozycja: ${player.position}")
+        when (selectedTab) {
+            "info" -> {
+                Column {
+                    Text("Imię: ${player.firstName}")
+                    Text("Nazwisko: ${player.lastName}")
+                    Text("Wzrost: ${player.height} cm")
+                    Text("Data urodzenia: ${player.birthDate}")
+                    Text("Numer koszulki: ${player.jerseyNumber}")
+                    Text("Dominująca noga: ${player.dominantFoot}")
+                    Text("Kraj: ${player.country}")
+                    Text("Klub: ${player.club}")
+                    Text("Pozycja: ${player.position}")
+                }
             }
-        } else {
-            Column {
-                Text("Gole: ${player.goals}")
-                Text("Rozegrane mecze: ${player.matches}")
-                Text("Asysty: ${player.assists}")
-                Text("Żółte kartki: ${player.yellowCards}")
-                Text("Czerwone kartki: ${player.redCards}")
+            "stats" -> {
+                Column {
+                    Text("Gole: ${player.goals}")
+                    Text("Rozegrane mecze: ${player.matches}")
+                    Text("Asysty: ${player.assists}")
+                    Text("Żółte kartki: ${player.yellowCards}")
+                    Text("Czerwone kartki: ${player.redCards}")
+                }
             }
+
+            "model" -> {
+                val engine = rememberEngine()
+                val modelLoader = rememberModelLoader(engine)
+                val context = LocalContext.current
+
+                val modelFileName = "player_model_${player.id}.glb"
+                val fileExists = remember {
+                    try {
+                        context.assets.open(modelFileName).close()
+                        true
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+
+                Column {
+                    if (fileExists) {
+                        val node = ModelNode(modelLoader.createModelInstance(modelFileName)).apply {
+                            position = Position(0f, -15f, 0f)
+                        }
+
+                        Scene(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(500.dp),
+                            engine = engine,
+                            view = rememberView(engine),
+                            renderer = rememberRenderer(engine),
+                            scene = rememberScene(engine),
+                            cameraNode = rememberCameraNode(engine) {
+                                position = Position(z = 25.0f)
+                            },
+                            modelLoader = modelLoader,
+                            childNodes = listOf(node),
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { /* TODO: Akcja dla nowego skanu */ },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text("Nowy skan 3D")
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(500.dp)
+                                .background(Color.LightGray),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Brak modelu 3D")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { /* TODO: Akcja dla pierwszego skanu */ },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text("Zrób skan 3D")
+                        }
+                    }
+                }
+            }
+
+
+
+
+
+
         }
     }
 }
