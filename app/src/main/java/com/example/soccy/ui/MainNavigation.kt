@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +21,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 // 🔽 Ekrany nawigacji
 sealed class Screen(val title: String, val icon: ImageVector) {
     data object Home : Screen("HomePage", Icons.Default.Home)
-    data object Search : Screen("Search", Icons.Default.Search)
     data object Profile : Screen("Profile", Icons.Default.Person)
 
     data object Players : Screen("Zawodnicy", Icons.Default.Groups)
@@ -44,7 +42,6 @@ fun MainNavigation() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") { HomeScreen(navController) }
-            composable("search") { SearchScreen(navController) }
             composable("players") {
                 PlayersScreen(navController)
             }
@@ -66,7 +63,6 @@ fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         val items = listOf(
             Screen.Home to "home",
-            Screen.Search to "search",
             Screen.Players to "players",
             Screen.Profile to "profile"
         )
