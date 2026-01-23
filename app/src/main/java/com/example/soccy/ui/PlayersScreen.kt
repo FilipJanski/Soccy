@@ -14,7 +14,7 @@ import androidx.navigation.NavController
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun PlayersScreen(navController: NavController) {
+fun PlayersScreen(navController: NavController, role: String) {
     val db = FirebaseFirestore.getInstance()
     var allPlayers by remember { mutableStateOf(listOf<Player>()) }
     var searchQuery by remember { mutableStateOf("") }
@@ -36,6 +36,7 @@ fun PlayersScreen(navController: NavController) {
             }
     }
 
+
     val filteredPlayers = if (searchQuery.isBlank()) {
         allPlayers
     } else {
@@ -50,6 +51,18 @@ fun PlayersScreen(navController: NavController) {
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp)) {
+
+        if (role == "admin") {
+            Button(
+                onClick = { navController.navigate("addPlayer") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Dodaj zawodnika")
+            }
+        }
 
         OutlinedTextField(
             value = searchQuery,

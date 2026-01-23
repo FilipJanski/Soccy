@@ -26,7 +26,8 @@ import io.github.sceneview.rememberCameraNode
 
 
 @Composable
-fun PlayerProfileScreen(playerId: String?) {
+fun PlayerProfileScreen(playerId: String?, role: String)
+ {
     var player by remember { mutableStateOf<Player?>(null) }
     val db = FirebaseFirestore.getInstance()
     val currentPlayerId by rememberUpdatedState(playerId)
@@ -59,14 +60,15 @@ fun PlayerProfileScreen(playerId: String?) {
     }
 
     player?.let {
-        PlayerProfileContent(it)
+        PlayerProfileContent(it, role)
     } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
     }
 }
 
 @Composable
-fun PlayerProfileContent(player: Player) {
+fun PlayerProfileContent(player: Player, role: String)
+ {
     var selectedTab by remember { mutableStateOf("info") }
 
     Column(
@@ -192,12 +194,13 @@ fun PlayerProfileContent(player: Player) {
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { /* TODO: Akcja dla nowego skanu */ },
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        ) {
-                            Text("Nowy skan 3D")
+                        if (role == "admin") {
+                            Button(
+                                onClick = { /* TODO: Akcja dla nowego skanu */ },
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            ) {
+                                Text("Nowy skan 3D")
+                            }
                         }
                     } else {
                         Box(
@@ -211,12 +214,13 @@ fun PlayerProfileContent(player: Player) {
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { /* TODO: Akcja dla pierwszego skanu */ },
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        ) {
-                            Text("Zrób skan 3D")
+                        if (role == "admin") {
+                            Button(
+                                onClick = { /* TODO: Akcja dla pierwszego skanu */ },
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            ) {
+                                Text("Zrób skan 3D")
+                            }
                         }
                     }
                 }
