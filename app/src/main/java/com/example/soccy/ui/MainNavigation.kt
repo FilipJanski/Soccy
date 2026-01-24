@@ -43,8 +43,24 @@ fun MainNavigation(role: String, login: String) {
 
             composable("player/{playerId}") { backStackEntry ->
                 val playerId = backStackEntry.arguments?.getString("playerId")
-                if (playerId != null) PlayerProfileScreen(playerId, role)
+                if (playerId != null) {
+                    PlayerProfileScreen(
+                        playerId = playerId,
+                        role = role,
+                        navController = navController
+                    )
+                }
             }
+            composable("editPlayer/{playerId}") { backStackEntry ->
+                val playerId = backStackEntry.arguments?.getString("playerId")
+                if (playerId != null) {
+                    EditPlayerScreen(
+                        navController = navController,
+                        playerId = playerId
+                    )
+                }
+            }
+
 
             composable("addPlayer") {
                 AddPlayerScreen(navController)
@@ -71,6 +87,7 @@ fun MainNavigation(role: String, login: String) {
                     )
                 }
             }
+
 
 
         }

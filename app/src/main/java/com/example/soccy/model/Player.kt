@@ -15,6 +15,7 @@ data class Player(
     val matches: Int = 0,
     val yellowCards: Int = 0,
     val redCards: Int = 0,
-    val assists: Int = 0
+    val assists: Int = 0,
+    val photoUri: String? = null
 )
 

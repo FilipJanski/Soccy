@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.soccy.model.Player
 import com.google.firebase.firestore.FirebaseFirestore
 import io.github.sceneview.Scene
@@ -23,70 +24,198 @@ import io.github.sceneview.rememberScene
 import io.github.sceneview.rememberView
 import io.github.sceneview.math.Position
 import io.github.sceneview.rememberCameraNode
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import androidx.core.net.toUri
+import android.content.Context
+import android.net.Uri
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.unit.Dp
+import java.io.File
+import androidx.compose.ui.unit.DpOffset
+
+
 
 
 @Composable
-fun PlayerProfileScreen(playerId: String?, role: String)
+fun PlayerProfileScreen(playerId: String?, role: String, navController: NavHostController)
  {
     var player by remember { mutableStateOf<Player?>(null) }
     val db = FirebaseFirestore.getInstance()
     val currentPlayerId by rememberUpdatedState(playerId)
 
-    LaunchedEffect(currentPlayerId) {
-        currentPlayerId?.let { id ->
-            db.collection("players").document(id).get()
-                .addOnSuccessListener { document ->
-                    if (document != null && document.exists()) {
-                        player = Player(
-                            id = document.id,
-                            firstName = document.getString("firstName") ?: "",
-                            lastName = document.getString("lastName") ?: "",
-                            birthDate = document.getString("birthDate") ?: "",
-                            height = document.getLong("height")?.toInt() ?: 0,
-                            jerseyNumber = document.getLong("jerseyNumber")?.toInt() ?: 0,
-                            dominantFoot = document.getString("dominantFoot") ?: "",
-                            country = document.getString("country") ?: "",
-                            club = document.getString("club") ?: "",
-                            position = document.getString("position") ?: "",
-                            goals = document.getLong("goals")?.toInt() ?: 0,
-                            matches = document.getLong("matches")?.toInt() ?: 0,
-                            yellowCards = document.getLong("yellowCards")?.toInt() ?: 0,
-                            redCards = document.getLong("redCards")?.toInt() ?: 0,
-                            assists = document.getLong("assists")?.toInt() ?: 0
-                        )
-                    }
-                }
-        }
-    }
+     DisposableEffect(currentPlayerId) {
+         val id = currentPlayerId ?: return@DisposableEffect onDispose {}
 
-    player?.let {
-        PlayerProfileContent(it, role)
+         val listener = db.collection("players")
+             .document(id)
+             .addSnapshotListener { document, _ ->
+                 if (document != null && document.exists()) {
+                     player = Player(
+                         id = document.id,
+                         firstName = document.getString("firstName") ?: "",
+                         lastName = document.getString("lastName") ?: "",
+                         birthDate = document.getString("birthDate") ?: "",
+                         height = document.getLong("height")?.toInt() ?: 0,
+                         jerseyNumber = document.getLong("jerseyNumber")?.toInt() ?: 0,
+                         dominantFoot = document.getString("dominantFoot") ?: "",
+                         country = document.getString("country") ?: "",
+                         club = document.getString("club") ?: "",
+                         position = document.getString("position") ?: "",
+                         goals = document.getLong("goals")?.toInt() ?: 0,
+                         matches = document.getLong("matches")?.toInt() ?: 0,
+                         yellowCards = document.getLong("yellowCards")?.toInt() ?: 0,
+                         redCards = document.getLong("redCards")?.toInt() ?: 0,
+                         assists = document.getLong("assists")?.toInt() ?: 0,
+                         photoUri = document.getString("photoUri")
+                     )
+                 }
+             }
+
+         onDispose { listener.remove() }
+     }
+
+
+
+     player?.let {
+        PlayerProfileContent(it, role, navController)
     } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
     }
 }
 
 @Composable
-fun PlayerProfileContent(player: Player, role: String)
- {
-    var selectedTab by remember { mutableStateOf("info") }
+fun PlayerProfileContent(player: Player, role: String, navController: NavHostController)
+{
+    val context = LocalContext.current
+    val db = FirebaseFirestore.getInstance()
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val localPath = copyImageToAppStorage(
+                context = context,
+                sourceUri = uri,
+                playerId = player.id
+            )
+
+            if (localPath != null) {
+                db.collection("players")
+                    .document(player.id)
+                    .update("photoUri", localPath)
+            }
+        }
+    }
+     var selectedTab by remember { mutableStateOf("info") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        var menuExpanded by remember { mutableStateOf(false) }
+
+        if (role == "admin") {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .padding(end = 10.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Menu",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+
+                )
+                }
+            }
+
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+                offset = DpOffset(x = (205).dp, y = (140).dp)
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Edytuj zawodnika") },
+                    onClick = {
+                        menuExpanded = false
+                        navController.navigate("editPlayer/${player.id}")
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Zmień zdjęcie") },
+                    onClick = {
+                        menuExpanded = false
+                        imagePicker.launch("image/*")
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Usuń zdjęcie") },
+                    onClick = {
+                        menuExpanded = false
+                        player.photoUri.let {
+                            val file = File(it?.toUri()?.path ?: "")
+                            if (file.exists()) file.delete()
+                        }
+
+                        db.collection("players")
+                            .document(player.id)
+                            .update("photoUri", null)
+                    }
+                )
+
+                HorizontalDivider()
+
+                DropdownMenuItem(
+                    text = { Text("Usuń zawodnika", color = MaterialTheme.colorScheme.error) },
+                    onClick = {
+                        menuExpanded = false
+                        FirebaseFirestore.getInstance()
+                            .collection("players")
+                            .document(player.id)
+                            .delete()
+                            .addOnSuccessListener {
+                                // 🔥 WRACAMY DO LISTY ZAWODNIKÓW
+                                navController.popBackStack(
+                                    route = "players",
+                                    inclusive = false
+                                )
+                            }
+                    }
+                )
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(Color.Gray, shape = CircleShape)
-            ) {}
+            if (!player.photoUri.isNullOrEmpty()) {
+                AsyncImage(
+                    model = player.photoUri.toUri(),
+                    contentDescription = "Zdjęcie zawodnika",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                PlayerAvatar(player = player)
+            }
+
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -101,6 +230,8 @@ fun PlayerProfileContent(player: Player, role: String)
                 }
             }
         }
+
+
 
         Row(
             modifier = Modifier
@@ -234,3 +365,64 @@ fun PlayerProfileContent(player: Player, role: String)
         }
     }
 }
+
+@Composable
+fun PlayerAvatar(
+    player: Player,
+    size: Dp = 80.dp
+) {
+    if (!player.photoUri.isNullOrEmpty()) {
+        AsyncImage(
+            model = player.photoUri.toUri(),
+            contentDescription = "Zdjęcie zawodnika",
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = getInitials(player.firstName, player.lastName),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+
+fun copyImageToAppStorage(
+    context: Context,
+    sourceUri: Uri,
+    playerId: String
+): String? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(sourceUri)
+            ?: return null
+
+        val file = File(context.filesDir, "player_$playerId.jpg")
+
+        file.outputStream().use { output ->
+            inputStream.copyTo(output)
+        }
+
+        file.toURI().toString() // 👉 ZWRACAMY file://...
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun getInitials(firstName: String, lastName: String): String {
+    val first = firstName.firstOrNull()?.uppercaseChar()?.toString() ?: ""
+    val last = lastName.firstOrNull()?.uppercaseChar()?.toString() ?: ""
+    return (first + last).ifEmpty { "?" }
+}
+

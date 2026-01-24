@@ -13,6 +13,7 @@ constraintlayout = "2.2.1"
 firebaseCommonKtx = "22.0.0"
 firebaseFirestoreKtx = "26.0.0"
 appcompat = "1.7.1"
+uiUnit = "1.10.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +37,7 @@ firebase-common-ktx = { group = "com.google.firebase", name = "firebase-common-k
 google-firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version = "25.1.4" }
 material_icons_extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.6.7" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
 
 
 [plugins]
