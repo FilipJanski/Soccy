@@ -7,7 +7,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -18,15 +17,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.foundation.clickable
 
 
-// 🔽 Ekrany nawigacji (dolny pasek)
+//  Ekrany nawigacji (dolny pasek)
 sealed class Screen(val title: String, val icon: ImageVector, val route: String) {
-    data object Home : Screen("Home", Icons.Default.Home, "home")
+    data object Home : Screen("Strona Główna", Icons.Default.Home, "home")
     data object Players : Screen("Zawodnicy", Icons.Default.Groups, "players")
     data object Profile : Screen("Profil", Icons.Default.Person, "profile")
 }
 
 @Composable
-fun MainNavigation(role: String, login: String) {
+fun MainNavigation(role: String, login: String, userId: String, onLogout: () -> Unit) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -39,7 +38,12 @@ fun MainNavigation(role: String, login: String) {
         ) {
             composable(Screen.Home.route) { HomeScreen(navController, role) }
             composable(Screen.Players.route) { PlayersScreen(navController, role) }
-            composable(Screen.Profile.route) { PlaceholderScreen("Profil: $login") }
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    userId = userId,
+                    onLogout = onLogout
+                )
+            }
 
             composable("player/{playerId}") { backStackEntry ->
                 val playerId = backStackEntry.arguments?.getString("playerId")
@@ -66,7 +70,7 @@ fun MainNavigation(role: String, login: String) {
                 AddPlayerScreen(navController)
             }
 
-            // ✅ ekran dodawania wydarzenia (na razie placeholder)
+            // ekran dodawania wydarzenia
             composable("addEvent") { AddEventScreen(navController) }
             composable("event/{eventId}") { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId")
@@ -107,7 +111,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {
-                        // ✅ jak klikniesz daną zakładkę, zawsze wracamy do jej "root"
+
                         popUpTo(screen.route) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -123,7 +127,6 @@ fun BottomNavigationBar(navController: NavHostController) {
     }
 }
 
-// ✅ HomeScreen jest TYLKO ekranem Home — nie ma tu NavHost ani Scaffold
 @Composable
 fun HomeScreen(navController: NavHostController, role: String) {
     val db = FirebaseFirestore.getInstance()
@@ -131,7 +134,7 @@ fun HomeScreen(navController: NavHostController, role: String) {
 
 
     LaunchedEffect(true) {
-        // EVENTS (najnowsze pierwsze)
+        // EVENTS
         db.collection("events")
             .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .get()
@@ -153,7 +156,7 @@ fun HomeScreen(navController: NavHostController, role: String) {
             .padding(16.dp)
     ) {
 
-        // ✅ Przycisk tylko dla admina
+
         if (role == "admin") {
             Button(
                 onClick = { navController.navigate("addEvent") },
@@ -208,10 +211,3 @@ fun HomeScreen(navController: NavHostController, role: String) {
     }
 }
 
-// Placeholder
-@Composable
-fun PlaceholderScreen(name: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = name, color = MaterialTheme.colorScheme.onBackground)
-    }
-}

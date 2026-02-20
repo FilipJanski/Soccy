@@ -68,7 +68,7 @@ fun AddEventScreen(navController: NavHostController) {
                     "title" to title.trim(),
                     "content" to content.trim(),
                     "createdAt" to Timestamp.now()
-                    // "createdBy" -> możesz dodać później (np. login admina)
+
                 )
 
                 db.collection("events")

@@ -4,8 +4,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services")
+    alias(libs.plugins.google.services)
 }
+
 
 android {
     namespace = "com.example.soccy"
@@ -13,10 +14,10 @@ android {
 
     defaultConfig {
         applicationId = "com.example.soccy"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,11 +32,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -44,10 +45,7 @@ android {
 
 dependencies {
     //noinspection UseTomlInstead
-    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
-    implementation("com.google.firebase:firebase-common-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx:25.1.4")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.navigation:navigation-compose:2.9.7")
     implementation(libs.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -57,8 +55,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.firebase.common.ktx)
-    implementation(libs.google.firebase.firestore.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.ui.unit)
     testImplementation(libs.junit)
@@ -71,5 +67,7 @@ dependencies {
     implementation(libs.material.icons.extended)
     implementation("io.github.sceneview:sceneview:2.3.3")
     implementation("io.coil-kt:coil-compose:2.7.0")
-
+    implementation(project(":scanner"))
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
 }

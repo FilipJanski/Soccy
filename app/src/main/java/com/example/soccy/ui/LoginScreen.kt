@@ -14,8 +14,8 @@ import androidx.navigation.NavController
 
 @Composable
 fun LoginScreen(
-    navController: androidx.navigation.NavController,
-    onLoginSuccess: (String, String) -> Unit
+    navController: NavController,
+    onLoginSuccess: (String, String, String) -> Unit // role, login, userId
 ) {
 
     val db = FirebaseFirestore.getInstance()
@@ -82,7 +82,9 @@ fun LoginScreen(
                             val user = result.documents.firstOrNull()
                             if (user != null) {
                                 val role = user.getString("rola") ?: "user"
-                                onLoginSuccess(role, login)
+                                val login = user.getString("login") ?: ""
+                                val userId = user.id
+                                onLoginSuccess(role, login, userId)
                             } else {
                                 errorMessage = "Nieprawidłowy login lub hasło"
                             }
@@ -114,6 +116,13 @@ fun LoginScreen(
                 Text("Nie masz konta? Zarejestruj się")
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "login: admin\nhasło: admin",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+            )
 
 
         }

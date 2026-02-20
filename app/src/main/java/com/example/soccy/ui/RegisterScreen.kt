@@ -101,17 +101,17 @@ fun RegisterScreen(navController: NavHostController) {
                         }
 
                         else -> {
-                            // 🔍 SPRAWDZENIE CZY LOGIN JUŻ ISTNIEJE
+                            // SPRAWDZENIE CZY LOGIN JUŻ ISTNIEJE
                             db.collection("users")
                                 .whereEqualTo("login", login)
                                 .get()
                                 .addOnSuccessListener { result ->
                                     if (!result.isEmpty) {
-                                        // ❌ login już istnieje
+                                        // login już istnieje
                                         errorMessage = "Użytkownik o takim loginie już istnieje"
                                         successMessage = null
                                     } else {
-                                        // ✅ można dodać nowego użytkownika
+                                        // można dodać nowego użytkownika
                                         db.collection("users")
                                             .add(
                                                 mapOf(

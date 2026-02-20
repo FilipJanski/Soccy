@@ -103,7 +103,7 @@ fun EventEditScreen(
                             )
                             .addOnSuccessListener {
                                 saving = false
-                                // wróć do szczegółów (czyli poprzedniego ekranu)
+
                                 navController.popBackStack()
                             }
                             .addOnFailureListener { e ->

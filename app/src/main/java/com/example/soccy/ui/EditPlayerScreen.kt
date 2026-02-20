@@ -19,7 +19,7 @@ fun EditPlayerScreen(
     val db = FirebaseFirestore.getInstance()
     val context = LocalContext.current
 
-    // 🔹 stany pól
+    //  stany pól
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var club by remember { mutableStateOf("") }
@@ -35,7 +35,7 @@ fun EditPlayerScreen(
     var redCards by remember { mutableStateOf("") }
     var assists by remember { mutableStateOf("") }
 
-    // 🔹 wczytanie danych
+    //  wczytanie danych
     LaunchedEffect(playerId) {
         db.collection("players").document(playerId).get()
             .addOnSuccessListener { doc ->

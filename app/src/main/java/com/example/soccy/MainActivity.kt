@@ -4,7 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
-import androidx.navigation.compose.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.soccy.ui.LoginScreen
 import com.example.soccy.ui.MainNavigation
 import com.example.soccy.ui.RegisterScreen
@@ -19,43 +22,52 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SoccyTheme {
-
                 val navController = rememberNavController()
 
-                // Stan zalogowanego użytkownika
-                var role by remember { mutableStateOf("") }
-                var login by remember { mutableStateOf("") }
+
+                var role by rememberSaveable { mutableStateOf("") }
+                var login by rememberSaveable { mutableStateOf("") }
+                var userId by rememberSaveable { mutableStateOf("") }
 
                 NavHost(
                     navController = navController,
-                    startDestination = "login"
+                    startDestination = if (userId.isBlank()) "login" else "main"
                 ) {
-
-                    // 🔐 LOGOWANIE
                     composable("login") {
                         LoginScreen(
                             navController = navController,
-                            onLoginSuccess = { loggedRole, loggedLogin ->
+                            onLoginSuccess = { loggedRole, loggedLogin, loggedUserId ->
                                 role = loggedRole
                                 login = loggedLogin
+                                userId = loggedUserId
 
                                 navController.navigate("main") {
                                     popUpTo("login") { inclusive = true }
+                                    launchSingleTop = true
                                 }
                             }
                         )
                     }
 
-                    // 📝 REJESTRACJA
                     composable("register") {
                         RegisterScreen(navController)
                     }
 
-                    // 🏠 GŁÓWNA APLIKACJA
                     composable("main") {
                         MainNavigation(
                             role = role,
-                            login = login
+                            login = login,
+                            userId = userId,
+                            onLogout = {
+                                role = ""
+                                login = ""
+                                userId = ""
+
+                                navController.navigate("login") {
+                                    popUpTo("main") { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
                         )
                     }
                 }

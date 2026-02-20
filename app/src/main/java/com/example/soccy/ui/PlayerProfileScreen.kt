@@ -1,45 +1,64 @@
 package com.example.soccy.ui
 
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import com.example.soccy.model.Player
-import com.google.firebase.firestore.FirebaseFirestore
-import io.github.sceneview.Scene
-import io.github.sceneview.node.ModelNode
-import io.github.sceneview.rememberEngine
-import io.github.sceneview.rememberModelLoader
-import io.github.sceneview.rememberRenderer
-import io.github.sceneview.rememberScene
-import io.github.sceneview.rememberView
-import io.github.sceneview.math.Position
-import io.github.sceneview.rememberCameraNode
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
-import androidx.core.net.toUri
-import android.content.Context
-import android.net.Uri
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
-import java.io.File
 import androidx.compose.ui.unit.DpOffset
-
-
+import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
+import com.example.soccy.model.Player
+import com.google.firebase.firestore.FirebaseFirestore
+import java.io.File
 
 
 @Composable
@@ -113,7 +132,7 @@ fun PlayerProfileContent(player: Player, role: String, navController: NavHostCon
         }
     }
      var selectedTab by remember { mutableStateOf("info") }
-
+    var scanRefreshKey by remember { mutableIntStateOf(0) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -186,7 +205,7 @@ fun PlayerProfileContent(player: Player, role: String, navController: NavHostCon
                             .document(player.id)
                             .delete()
                             .addOnSuccessListener {
-                                // 🔥 WRACAMY DO LISTY ZAWODNIKÓW
+                                // WRACAMY DO LISTY ZAWODNIKÓW
                                 navController.popBackStack(
                                     route = "players",
                                     inclusive = false
@@ -288,70 +307,58 @@ fun PlayerProfileContent(player: Player, role: String, navController: NavHostCon
                 }
             }
 
-            "model" -> {
-                val engine = rememberEngine()
-                val modelLoader = rememberModelLoader(engine)
-                val context = LocalContext.current
 
-                val modelFileName = "player_model_${player.id}.glb"
-                val fileExists = remember {
-                    try {
-                        context.assets.open(modelFileName).close()
-                        true
-                    } catch (e: Exception) {
-                        false
-                    }
+            "model" -> {
+                val activity = LocalContext.current.findActivity()
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartActivityForResult()
+                ) {
+
+                    scanRefreshKey++
                 }
 
-                Column {
-                    if (fileExists) {
-                        val node = ModelNode(modelLoader.createModelInstance(modelFileName)).apply {
-                            position = Position(0f, -15f, 0f)
-                        }
+                val context = LocalContext.current
+                val scansDir = File(context.getExternalFilesDir(null), "scans")
+                val plyFile = remember(player.id, scanRefreshKey) {
+                    File(scansDir, "${player.id}.ply")
+                }
+                val hasPly = remember(plyFile.absolutePath, scanRefreshKey) { plyFile.exists() }
 
-                        Scene(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(500.dp),
-                            engine = engine,
-                            view = rememberView(engine),
-                            renderer = rememberRenderer(engine),
-                            scene = rememberScene(engine),
-                            cameraNode = rememberCameraNode(engine) {
-                                position = Position(z = 25.0f)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        if (hasPly) {
+                            PlyPointCloudViewer(
+                                plyFile = plyFile,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("Brak modelu 3D")
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    if (role == "admin") {
+                        Button(
+                            onClick = {
+                                val act = activity ?: return@Button
+                                val intent = android.content.Intent(act, com.example.threedscanner.MainActivity::class.java)
+                                intent.putExtra("scan_tag", player.id)
+                                launcher.launch(intent)
                             },
-                            modelLoader = modelLoader,
-                            childNodes = listOf(node),
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (role == "admin") {
-                            Button(
-                                onClick = { /* TODO: Akcja dla nowego skanu */ },
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            ) {
-                                Text("Nowy skan 3D")
-                            }
-                        }
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(500.dp)
-                                .background(Color.LightGray),
-                            contentAlignment = Alignment.Center
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Brak modelu 3D")
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (role == "admin") {
-                            Button(
-                                onClick = { /* TODO: Akcja dla pierwszego skanu */ },
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            ) {
-                                Text("Zrób skan 3D")
-                            }
+                            Text(if (hasPly) "Nowy skan 3D" else "Zrób skan 3D")
                         }
                     }
                 }
@@ -413,7 +420,7 @@ fun copyImageToAppStorage(
             inputStream.copyTo(output)
         }
 
-        file.toURI().toString() // 👉 ZWRACAMY file://...
+        file.toURI().toString()
     } catch (e: Exception) {
         e.printStackTrace()
         null
@@ -426,3 +433,10 @@ fun getInitials(firstName: String, lastName: String): String {
     return (first + last).ifEmpty { "?" }
 }
 
+
+
+fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}

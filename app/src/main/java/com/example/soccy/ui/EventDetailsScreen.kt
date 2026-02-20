@@ -60,7 +60,7 @@ fun EventDetailsScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // ✅ Admin-only buttons (na razie nawigacja, logikę zrobimy za chwilę)
+
                 if (role == "admin") {
                     Button(
                         onClick = { navController.navigate("eventEdit/$eventId") },
